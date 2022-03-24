@@ -1,0 +1,43 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: couchdb
+  labels:
+    app: couchdb
+spec:
+  selector:
+    matchLabels:
+      app: couchdb
+  template:
+    metadata:
+      labels:
+        app: couchdb
+    spec:
+      volumes:
+      - name: data-storage
+        persistentVolumeClaim:
+          claimName: data-pv-claim
+      - name: config-storage
+        persistentVolumeClaim:
+          claimName: config-pv-claim
+      containers:
+      - image: docker.io/library/couchdb:3
+        name: couchdb
+        ports:
+        - containerPort: 5984
+        volumeMounts:
+        - mountPath: "/opt/couchdb/data"
+          name: data-storage
+        - mountPath: "/opt/couchdb/etc/local.d"
+          name: config-storage
+        env:
+        - name: COUCHDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: couchdb-secret
+              key: COUCHDB_USER
+        - name: COUCHDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: couchdb-secret
+              key: COUCHDB_PASSWORD
