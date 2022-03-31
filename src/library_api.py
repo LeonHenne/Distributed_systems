@@ -10,8 +10,10 @@ import couchdb
 app = Flask(__name__)
 app.config.from_object("api_config.DevelopmentConfig")
 database_connection = False
+
 @app.route("/")
 def title_page():
+    '''Route returns a welcoming page explaining the basic API endpoints'''
     if database_connection:
         return  """ <h1>Hello on my booklibrary API</h1>
                     <h2>This API has following endpoints</h2>
@@ -33,8 +35,10 @@ def title_page():
     else: return """<h1>Hello on my booklibrary API</h1>
                     <h2>The API is currently not available due to missing database</h2>"""
 
+
 @app.route("/api/v1/getall", methods=["GET"])
 def get_all():
+    '''Returns all Books from the Database in a JSON format'''
     if database_connection:
         result_dict = {}
         count = 0
@@ -44,12 +48,13 @@ def get_all():
                 result_dict.update({str(count)+":": {"AUTHOR": doc["author"], "TITLE": doc["title"], "LANGUAGE": doc["lang"], "ISBN": doc["isbn"]}})
                 count += 1
         if len(result_dict) == 0:
-            return {"INFO": "The book listing is empty"} 
-        return result_dict
-    else: return {"ERROR":"Connection Error, Database couldnt be reached"}
+            return {"INFO": "The book listing is empty"}, 200
+        return result_dict, 200
+    else: return {"ERROR":"Connection Error, Database couldnt be reached"}, 500
 
 @app.route("/api/v1/get_isbn", methods=["GET"])
-def get_isbnquery():
+def get_isbn_query():
+    '''Takes an isbn number as a query parameter. Returns the other bookinformation to that ISBN if available'''
     if database_connection:
         args = request.args.to_dict()
         isbn = args.get("isbn")
@@ -68,6 +73,7 @@ def get_isbnquery():
 
 @app.route("/api/v1/create", methods = ['PUT'])
 def create_book():
+    '''Takes a body with a JSON string within. Returns a success alert, if a database entry was created'''
     if database_connection:
         creating_book = json.loads(request.data.decode('utf-8'))
         if check(creating_book.get("isbn")):
@@ -78,16 +84,18 @@ def create_book():
                 return response,200
             else: return {"detail": "Book already present in library database"}, 400
         else: return {"detail": "Invalid ISBN!"}, 400
-    else: return {"ERROR":"Connection Error, Database couldnt be reached"}
+    else: return {"ERROR":"Connection Error, Database couldnt be reached"}, 500
 
 @app.route("/health", methods = ['GET'])
 def check_health():
+    '''Returns a JSON String, demonstrating that the microservice is available'''
     if database_connection:
         return {"status": "UP"}
     else: return {"status": "UP / No Database"}
 
 # Function copied from https://rosettacode.org/wiki/ISBN13_check_digit#Python (30.03.2022)
 def check(n):
+    '''Takes an ISBN number. Returns True or False wheter the ISBN is valid'''
     n = n.replace('-','').replace(' ', '')
     if len(n) != 13:
         return False
@@ -96,6 +104,7 @@ def check(n):
     return product % 10 == 0
 
 def existing_book(isbn):
+    '''Calls the get_isbn endpoint, to check if an entry exists with the given ISBN'''
     url = "http://"+app.config["SERVER_NAME"]+ "/api/v1/get_isbn?isbn="+str(isbn)
     result = requests.head(url)
     return (result.status_code == 202)
