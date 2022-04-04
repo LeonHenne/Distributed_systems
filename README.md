@@ -92,8 +92,26 @@ curl -X GET 'http://localhost:8080/health'
 </pre>
 ***Result Example***
 <pre>
-HTTP 400
+HTTP 200
 {
-"detail": "Invalid ISBN!"
+  "status": "UP"
 }
 </pre>
+
+
+## Docker
+Nach der Entwicklung des Microservices behandelt der folgende Teil die Auslieferung der Anwendung über einen Container. Ein Container stellt eine auf betriebssystemebene virtualisierte Umgebung zur Verfügung.
+Der Microservice, sowie die benötigte CouchDB müssen dazu in jeweils einem Container innerhalb eines gemeinsamen Netzwerkes zur Verfügung gestellt werden. Die Erstellung eines Containers startet mit dem Schreiben eines Dockerfiles. In dieser Datei wird zunächst das grundlegende virtualisierte Betriebssystem als  Basisimage angegeben. Im Weiteren werden Anweisungen zum Freigeben von Ports, installieren von Paketen und Kopieren und Ausführen der benötigten Dateien beschrieben. Insgesamt baut sich das Dockerfile aus folgenden Hauptkomponenten zusammen:
+<pre>
+FROM :
+EXPOSE : 
+</pre>
+***Docker build:***
+docker build -t distributedsystems .
+***Docker run:***
+docker container run -d -p 8080:8080 --name libraryAPI --network lib-network distributedsystems
+
+docker run -d -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=student \
+--network lib-network --network-alias couchdb \
+-v /Users/leonhenne/Repositories/git-dhbw/Distributed_systems/couchdb/data:/opt/couchdb/data \
+-v /Users/leonhenne/Repositories/git-dhbw/Distributed_systems/couchdb/config:/opt/couchdb/etc/local.d --name couchdb2 couchdb:3

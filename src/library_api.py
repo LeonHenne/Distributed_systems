@@ -8,8 +8,6 @@ from flask import Flask, request
 import couchdb
 
 app = Flask(__name__)
-app.config.from_object("api_config.DevelopmentConfig")
-database_connection = False
 
 @app.route("/")
 def title_page():
@@ -90,7 +88,7 @@ def create_book():
 def check_health():
     '''Returns a JSON String, demonstrating that the microservice is available'''
     if database_connection:
-        return {"status": "UP"}
+        return {"status": "UP"},200
     else: return {"status": "UP / No Database"}
 
 # Function copied from https://rosettacode.org/wiki/ISBN13_check_digit#Python (30.03.2022)
@@ -109,14 +107,24 @@ def existing_book(isbn):
     result = requests.head(url)
     return (result.status_code == 202)
 
+def build_connection():
+    couch = couchdb.Server(app.config["COUCHDB_SERVER"])
+    db = couch['library']
+    database_connection = True
+    return db, database_connection
+
+
 if __name__ == '__main__':
-    
+    app.config.from_object("api_config.DevelopmentConfig")
+    database_connection = False
     try:
         couch = couchdb.Server(app.config["COUCHDB_SERVER"])
         db = couch['library']
         database_connection = True
+        app.run()
     except ConnectionError:
         error_msg = "ERROR: Connection Error, Database couldnt be reached"
         print(error_msg)
     app.run()
+    
     
