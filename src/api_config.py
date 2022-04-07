@@ -10,7 +10,7 @@ class ProductionConfig(Config):
 class DevelopmentConfig(Config):
     DEBUG = True
     SERVER_NAME="0.0.0.0:8080"
-    COUCHDB_SERVER="http://admin:student@couchdb:5984/"
+    COUCHDB_SERVER="http://admin:student@localhost:5984/"
 
 class TestingConfig(Config):
     TESTING = True

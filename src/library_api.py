@@ -41,7 +41,7 @@ def get_all():
         result_dict = {}
         count = 0
         for id in db:
-            if len(id) > 14:
+            if id != "_design/books":
                 doc = db[id]
                 result_dict.update({str(count)+":": {"AUTHOR": doc["author"], "TITLE": doc["title"], "LANGUAGE": doc["lang"], "ISBN": doc["isbn"]}})
                 count += 1
@@ -107,15 +107,9 @@ def existing_book(isbn):
     result = requests.head(url)
     return (result.status_code == 202)
 
-def build_connection():
-    couch = couchdb.Server(app.config["COUCHDB_SERVER"])
-    db = couch['library']
-    database_connection = True
-    return db, database_connection
-
 
 if __name__ == '__main__':
-    app.config.from_object("api_config.DevelopmentConfig")
+    app.config.from_object("api_config.ProductionConfig")
     database_connection = False
     try:
         couch = couchdb.Server(app.config["COUCHDB_SERVER"])

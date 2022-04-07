@@ -1,0 +1,20 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: libraryAPI
+  labels:
+    app: libraryAPI
+spec:
+  selector:
+    matchLabels:
+      app: couchdb
+  template:
+    metadata:
+      labels:
+        app: couchdb
+    spec:
+      containers:
+      - image: # minikube load image
+        name: libraryAPI
+        ports:
+        - containerPort: 5984

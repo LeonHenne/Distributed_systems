@@ -1,7 +1,7 @@
 import requests
 import json
 
-url = "http://127.0.0.1:3000/api/v1/create"
+url = "http://0.0.0.0:8080/api/v1/create"
 data = {"author": "Henne, Leon", "title":
 "Das Leid der verteilten Systeme", "lang": "de", "isbn": "978-0-345-40047-5"}
 
