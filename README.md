@@ -5,7 +5,7 @@ Die im Kurs "Verteilte Systeme" gestellte Portfolioprüfung besteht aus drei ver
 
 ## Library Microservice
 
-Im ersten Teil der Portfolioprüfung wird der Microservice entwickelt. Der Service soll über vier API Endpunkte verfügen, welche auf verschiedene Weisenmit der verbundnen Datenbank kommunizieren. Steht eine vollständige CouchDB, inklusive der Beispieldaten zur Verfügung, so kann der Microservice über das Ausführen der 'library_api.py' Datei, innerhalb der Umgebung 'venv' gestartet werden. 
+Im ersten Teil der Portfolioprüfung wird der Microservice entwickelt. Der Service soll über vier API Endpunkte verfügen, welche auf verschiedene Weisenmit der verbundnen Datenbank kommunizieren. Steht eine vollständige CouchDB, inklusive der Beispieldaten zur Verfügung, so kann der Microservice über das Ausführen der 'library_api.py' Datei, innerhalb der Umgebung 'venv' gestartet werden. Wichtig ist dabei zu beachten, dass die DevelopmentConfig aus der Konfigurationsdatei 'api_config.py' zu verwenden ist (library_api.py, 109), sofern der Microservice nicht in einem Container oder Kubernetes Cluster gestartet wird.
 
 ### **Get all Books**
 Über den ersten Endpunkt sollen alle Bücher, welche sich in der Datenbank befinden, mittels einer HTTP-GET Anfrage an die Route "api/v1/getall", im JSON Format an den Benutzer zurückgegeben werden. Ergebnisse der Anfrage können demnach die vollständige Liste aller Bücher, oder ein Hinweis auf eine leere Datenbank sein.
@@ -102,7 +102,7 @@ HTTP 200
 
 ## Docker Deployment
 Nach der Entwicklung des Microservices behandelt der folgende Teil die Auslieferung der Anwendung über einen Container. Ein Container stellt eine auf betriebssystemebene virtualisierte Umgebung zur Verfügung.
-Der Microservice, sowie die benötigte CouchDB müssen dazu in jeweils einem Container innerhalb eines gemeinsamen Netzwerkes zur Verfügung gestellt werden. Die Erstellung eines Containers startet mit dem Schreiben eines Dockerfiles. In dieser Datei wird zunächst das grundlegende virtualisierte Betriebssystem als  Basisimage angegeben. Im Weiteren werden Anweisungen beschrieben zum Freigeben von Ports, installieren von Paketen sowie Kopieren und Ausführen der benötigten Dateien. Insgesamt baut sich das Dockerfile aus folgenden Hauptkomponenten zusammen:  
+Der Microservice, sowie die benötigte CouchDB müssen dazu in jeweils einem Container innerhalb eines gemeinsamen Netzwerkes zur Verfügung gestellt werden. Wichtig ist dabei die Konfiguration des Microservices (library_api.py, 109) auf die ProductionConfig der 'api_config.py' Datei eingestellt zu haben. Die Erstellung eines Containers startet mit dem Schreiben eines Dockerfiles. In dieser Datei wird zunächst das grundlegende virtualisierte Betriebssystem als  Basisimage angegeben. Im Weiteren werden Anweisungen beschrieben zum Freigeben von Ports, installieren von Paketen sowie Kopieren und Ausführen der benötigten Dateien. Insgesamt baut sich das Dockerfile aus folgenden Hauptkomponenten zusammen:  
 <pre>
 FROM python:3.8-slim # loading the base image
 
