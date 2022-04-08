@@ -128,4 +128,47 @@ Ist das Image nun erstellt, können anhand dessen beliebig viele Container, mit 
 
 ## Kubernetes Deployment
 
-minikube image load getting-started:latest
+minikube start --cpus 2 --memory 3900 --driver docker
+
+CouchDB nach anleitung:
+kubectl apply -f couchdb_deployment-main/deploy_couchdb/secret.yaml
+kubectl apply -f couchdb_deployment-main/deploy_couchdb/storage.yaml
+kubectl apply -f couchdb_deployment-main/deploy_couchdb/service.yaml
+kubectl apply -f couchdb_deployment-main/deploy_couchdb/deployment.yaml
+
+minikube service couchdb --> neues Terminal
+
+(MAC) kubectl port-forward service/couchdb 5984:5984 --> neues Terminal
+
+bash couchdb_deployment-main/create_library_db.sh
+<pre>
+CouchDB Adresse (default: localhost)
+localhost
+CouchDB Port (default: 5984)
+5984
+CouchDB User (default: admin)
+admin
+CouchDB Passwort (default: student)
+student
+Ziel-URL: admin:student@localhost:5984
+========================================
+
+{"ok":true}
+{"ok":true,"id":"32ef6b4c46f692868232bd63aa00083b","rev":"1-8a0442e0e9593a70fab0b9c896ce3020"}
+{"ok":true,"id":"32ef6b4c46f692868232bd63aa001732","rev":"1-1e03b29451eba02a1230d6df0ee6dd22"}
+{"ok":true,"id":"32ef6b4c46f692868232bd63aa002449","rev":"1-6aa5738704d4b157e71a5caa91cbc602"}
+{"ok":true,"id":"32ef6b4c46f692868232bd63aa00331b","rev":"1-43359471fd9825330cc0d94c6997ecb3"}
+{"ok":true,"id":"32ef6b4c46f692868232bd63aa0038a6","rev":"1-af77b521ee80b1b47e3714129c2bf982"}
+{"ok":true,"id":"_design/books","rev":"1-d4df4247f10eea3ebd916124bc44b3d7"}
+</pre>
+
+minikube image load distributedsystems:latest
+
+kubectl apply -f deployment/service.yaml
+
+kubectl apply -f deployment/deployment.yaml
+
+minikube service library-api --> neues Terminal
+
+(MAC) kubectl port-forward service/library-api 8080:8080 --> neues Terminal
+
