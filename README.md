@@ -5,12 +5,13 @@ Die im Kurs "Verteilte Systeme" gestellte Portfolioprüfung besteht aus drei ver
 
 ## Library Microservice
 
-Im ersten Teil der Portfolioprüfung wird der Microservice entwickelt. Der Service soll über vier API Endpunkte verfügen, welche auf verschiedene Weisenmit der verbundnen Datenbank kommunizieren.  
+Im ersten Teil der Portfolioprüfung wird der Microservice entwickelt. Der Service soll über vier API Endpunkte verfügen, welche auf verschiedene Weisenmit der verbundnen Datenbank kommunizieren. Steht eine vollständige CouchDB, inklusive der Beispieldaten zur Verfügung, so kann der Microservice über das Ausführen der 'library_api.py' Datei, innerhalb der Umgebung 'venv' gestartet werden. 
+
 ### **Get all Books**
 Über den ersten Endpunkt sollen alle Bücher, welche sich in der Datenbank befinden, mittels einer HTTP-GET Anfrage an die Route "api/v1/getall", im JSON Format an den Benutzer zurückgegeben werden. Ergebnisse der Anfrage können demnach die vollständige Liste aller Bücher, oder ein Hinweis auf eine leere Datenbank sein.
 
 ***Call Example***  
-curl -X GET 'http://0.0.0.0:8080/api/v1/getall'
+<pre>curl -X GET 'http://0.0.0.0:8080/api/v1/getall'</pre>
 
 ***Result Examples***
 <pre>
@@ -112,13 +113,16 @@ RUN python -m pip install -r requirements.txt # Install pip requirements
 CMD ["python", "src/library_api.py"] # starts a python session and executes the sourcefile 
 </pre>  
 
+### **CouchDB Container**
 ***Starten des CouchDB Containers:***  
 <pre>docker run -d -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=student \  
 --network lib-network --network-alias couchdb \  
 -v "lokaler Pfad zum Repository"/couchdb/data:/opt/couchdb/data \  
 -v "lokaler Pfad zum Repository"/couchdb/config:/opt/couchdb/etc/local.d --name couchdb2 couchdb:3</pre>
 
-Aus dem verfassten Dockerfile kann nun eine Art Containerbauplan, das Containerimage, gebaut werden. Dazu muss ein "docker build"-Befehl ausgeführt werden, mit den Parametern des Zielorts und des Ursprungsorts des Dockerfiles.
+### **Microservice Container**
+Aus dem verfassten Dockerfile kann nun eine Art Containerbauplan, das Containerimage, gebaut werden. Dazu muss ein "docker build"-Befehl ausgeführt werden, mit den Parametern des Zielorts und des Ursprungsorts des Dockerfiles.  
+
 ***Docker build:***  
 <pre>docker build -t distributedsystems .</pre>  
 
@@ -127,20 +131,34 @@ Ist das Image nun erstellt, können anhand dessen beliebig viele Container, mit 
 <pre>docker container run -d -p 8080:8080 --name libraryAPI --network lib-network --network-alias libraryAPI distributedsystems</pre>
 
 ## Kubernetes Deployment
+Im letzten Kapitel soll der Microservice zusammen mit der benötigten CouchDB in einem Kubernetes Cluster ausgeliefert werden. Vorraussetzung dafür ist eine erfolgreiche Installation von Kubernetes, bzw. Minikube in diesem Beispiel. Wird Minikube gestartet, können über Parameter die Ressourcen zugewiesen und Docker als Treiber übergeben werden.
 
-minikube start --cpus 2 --memory 3900 --driver docker
+<pre>minikube start --cpus 2 --memory 3900 --driver docker</pre>  
 
+### **CouchDB**
+Nach dem Start von Minikube kann die CouchDB Datenbank eingesetzt werden. Dazu wenden wir die verschieden YAML-Dateien an, in welchen Zugangsdaten hinterlegt, Festplattenspeicher reserviert, ein Service Endpunkt erstellt und die benötigten Container gestartet werden. 
+<pre>
 CouchDB nach anleitung:
 kubectl apply -f couchdb_deployment-main/deploy_couchdb/secret.yaml
 kubectl apply -f couchdb_deployment-main/deploy_couchdb/storage.yaml
 kubectl apply -f couchdb_deployment-main/deploy_couchdb/service.yaml
 kubectl apply -f couchdb_deployment-main/deploy_couchdb/deployment.yaml
+</pre>
 
-minikube service couchdb --> neues Terminal
+Über "minikube service couchdb" innerhalb eines neuen Terminals, öffnet sich einen Tunner zu der CouchDB, was zeigt, dass die CouchDB erfolgreich im Kubernetes Cluster zur Verfügung steht. Je nach Betriebssystem ist es noch wichtig, den internen Port auf den eigenen Port zu mappen, um Zugriff auf den Service zu erlangen. Dieses Problem tritt beispielsweise bei MacOS auf, kann aber über den "port-forward" der kubectl api gelöst werden.
 
-(MAC) kubectl port-forward service/couchdb 5984:5984 --> neues Terminal
+***(neues Terminal)***
+<pre>minikube service couchdb</pre>
 
-bash couchdb_deployment-main/create_library_db.sh
+***(neues Terminal)***
+<pre>kubectl port-forward service/couchdb 5984:5984</pre>
+
+Die CouchDB kann nun über den "localhost:5984/" erreicht werden, ist jedoch zu Anfang leer und besitzt keine Datenbanken. Über ein Shellskript wird dies geändert, und die Datenbank "library" mit sechs Beispielbüchern angelegt. Das Skript erfordert dabei die Eingabe der Adresse der CouchDB sowie Port, User und Passwort. Die einzelnen Eingaben sind mit 'Enter' zu Bestätigen. 
+
+***executing shellskript***
+<pre>bash couchdb_deployment-main/create_library_db.sh</pre>
+
+***Shellskript Result:***
 <pre>
 CouchDB Adresse (default: localhost)
 localhost
@@ -162,13 +180,37 @@ Ziel-URL: admin:student@localhost:5984
 {"ok":true,"id":"_design/books","rev":"1-d4df4247f10eea3ebd916124bc44b3d7"}
 </pre>
 
-minikube image load distributedsystems:latest
+### **Microservice Container**
+Um den entwickelten Microservice in einen Kubernetes Cluster einzubinden, muss zunächst dem Minikube das verwendete Image zum Bauen eines Docker Containers vorliegen. Das Image kann dazu entweder aus einem Docker Repository stammen, oder wie in diesem Beispiel, lokal geladen werden, über den 'image load'-Befehl von Minikube. 
 
+<pre>minikube image load distributedsystems:latest</pre>
+
+Nachdem das Image nun vorliegt, können equivalent zu der CouchDB auch die YAML-Dateien des Microservices als Ressourcenkonfiguration hinterlegt, und das Deployment gestartet werden. Das Anwenden der service.yaml Datei erzeugt dabei die deklarative Konfigurationsbeschreibung des Endpunktes der 'library-api' auf dem Port 8080. Der 'desired state' des Deployments wird von der deployment.yaml beschrieben. Es wird deklariert, dass ein ReplicaSet mit einem Container aus dem Image 'distributedsystems:latest' gestartet sein soll, welcher Anfragen auf dem Port 8080 entgegen nimmt. 
+<pre>
 kubectl apply -f deployment/service.yaml
-
 kubectl apply -f deployment/deployment.yaml
+</pre>
 
-minikube service library-api --> neues Terminal
+Wurde die deployment.yaml Datei angewendet, so wird Minikube den beschrieben Zustand herstellen, indem ein Container aus dem Image unseres Microservices gebaut wird. Anschließend kann der Tunnel zum Service Endpunkt geöffnet, und je nach Betriebssystem der interne Port des Clusters auf den lokalen Port des localhosts übertragen werden.
 
-(MAC) kubectl port-forward service/library-api 8080:8080 --> neues Terminal
+***neues Terminal***
+<pre>minikube service library-api</pre> 
 
+***neues Terminal***
+<pre>kubectl port-forward service/library-api 8080:8080</pre>
+
+Nach dem erfolgreichen Abschließen dieser Schritte kann der Microservice vollumfänglich genutzt werden. Dazu können, die im Kapitel 'Library Microservice' beschriebenen Anfragen, entweder über die curl-Befehle genutzt werden, oder die Entsprechende Route im Browser eingegeben werden. Zusammenfassend lassen sich nun entweder über das Docker-, oder das Kubernetes Deployment, folgende API Schnittstellen verwenden.
+<pre>
+curl -X GET 'http://0.0.0.0:8080/api/v1/getall'
+
+curl -X GET 'http://0.0.0.0:8080/api/v1/get_isbn?isbn=978-3-423-28280-2'
+
+curl -X 'PUT' 'http://0.0.0.0:8080/api/v1/create' -H 'accept: application/json' \
+-H 'Content-Type: application/json' -d '{
+"author": "Cavanagh, Steve",
+"title": "Thirteen",
+"lang": "de",
+"isbn": "978-3-442-49215-2"}'
+
+curl -X GET 'http://0.0.0.0:8080/health'
+</pre>
