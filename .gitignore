@@ -1,4 +1,4 @@
 src/__pycache__
-
+venv
 .DS_Store
 src/api_config.py
